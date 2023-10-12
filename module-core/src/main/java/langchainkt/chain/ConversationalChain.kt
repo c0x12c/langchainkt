@@ -19,6 +19,6 @@ class ConversationalChain(
     chatMemory.add(UserMessage.userMessage(Validators.ensureNotBlank(input, "userMessage")))
     val message = chatLanguageModel.generate(chatMemory.messages()).content()
     chatMemory.add(message)
-    return message.text()!!
+    return message.text()
   }
 }
