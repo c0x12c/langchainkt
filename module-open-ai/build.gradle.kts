@@ -15,8 +15,8 @@ dependencies {
 
   implementation(Dependencies.Templating.mustache)
 
-  implementation(Dependencies.Llm.openai4j)
-  implementation(Dependencies.Llm.jtokkit)
+  implementation(Dependencies.LLM.openai4j)
+  implementation(Dependencies.LLM.jtokkit)
 
 
 }

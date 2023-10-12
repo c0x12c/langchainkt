@@ -72,11 +72,12 @@ object Dependencies {
     const val mustache = "com.github.spullara.mustache.java:compiler:0.9.10"
   }
 
-  object Llm {
+  object LLM {
     const val openai4j = "dev.ai4j:openai4j:0.9.0"
     const val jtokkit = "com.knuddels:jtokkit:0.6.1"
     const val pinecone = "io.pinecone:pinecone-client:0.2.3"
-    const val langchain4jEmbedding = "dev.langchain4j:langchain4j-embeddings-all-minilm-l6-v2-q:0.23.0"
+    const val onnxruntime = "com.microsoft.onnxruntime:onnxruntime:1.15.1"
+    const val djl = "ai.djl:api:0.23.0"
   }
 
   object Testing {

@@ -10,13 +10,13 @@ interface TokenCountEstimator {
 
   fun estimateTokenCount(text: String): Int
 
-  fun estimateTokenCount(textSegment: TextSegment): Int {
-    return estimateTokenCount(textSegment.text())
+  fun estimateTokenCount(segment: TextSegment): Int {
+    return estimateTokenCount(segment.text())
   }
 
-  fun estimateTokenCount(textSegments: List<TextSegment>): Int {
+  fun estimateTokenCount(segments: List<TextSegment>): Int {
     var tokenCount = 0
-    for (textSegment in textSegments) {
+    for (textSegment in segments) {
       tokenCount += estimateTokenCount(textSegment)
     }
     return tokenCount

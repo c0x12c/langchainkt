@@ -23,4 +23,5 @@ dependencies {
   implementation(Dependencies.OkHttp.core)
 
   implementation(Dependencies.Templating.mustache)
+  testImplementation(project(":embeddings:module-embeddings-all-minilm-l6-v2-q"))
 }
