@@ -5,7 +5,6 @@ import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtException
 import ai.onnxruntime.OrtSession
 import java.io.ByteArrayOutputStream
-import java.io.IOException
 import java.io.InputStream
 import java.net.URL
 import java.nio.LongBuffer
@@ -126,21 +125,17 @@ class OnnxBertBiEncoder(
     return tokenizer.tokenize(text).size
   }
 
-  private fun loadModel(modelInputStream: InputStream): ByteArray {
-    try {
-      modelInputStream.use { inputStream ->
-        ByteArrayOutputStream().use { buffer ->
-          var nRead: Int
-          val data = ByteArray(1024)
-          while (inputStream.read(data, 0, data.size).also { nRead = it } != -1) {
-            buffer.write(data, 0, nRead)
-          }
-          buffer.flush()
-          return buffer.toByteArray()
+  private fun loadModel(input: InputStream): ByteArray {
+    input.use { inputStream ->
+      ByteArrayOutputStream().use { buffer ->
+        val data = ByteArray(1024)
+        var nRead: Int
+        while (inputStream.read(data, 0, data.size).also { nRead = it } != -1) {
+          buffer.write(data, 0, nRead)
         }
+        buffer.flush()
+        return buffer.toByteArray()
       }
-    } catch (e: IOException) {
-      throw RuntimeException(e)
     }
   }
 
