@@ -61,10 +61,12 @@ internal class AiServiceStreamingResponseHandler(
     }
   }
 
-  override fun onError(error: Throwable) {
+  override fun onError(error: Throwable?) {
     if (errorHandler != null) {
       try {
-        errorHandler.accept(error)
+        error?.let {
+          errorHandler.accept(error)
+        }
       } catch (e: Exception) {
         log.error("While handling the following error...", error)
         log.error("...the following error happened", e)

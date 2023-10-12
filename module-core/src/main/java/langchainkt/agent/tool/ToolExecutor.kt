@@ -6,6 +6,7 @@ import java.math.BigInteger
 import kotlin.math.floor
 import kotlin.reflect.KFunction
 import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.typeOf
 import langchainkt.internal.Json.toJson
 import org.slf4j.LoggerFactory
 
@@ -16,7 +17,7 @@ class ToolExecutor(
 
   fun execute(request: ToolExecutionRequest): String? {
     log.debug("About to execute {}", request)
-    val arguments = prepareArguments(request.argumentsAsMap())
+    val arguments = argumentsFor(request.argumentsAsMap())
     return try {
       val result = execute(arguments)
       log.debug("Tool execution result: {}", result)
@@ -44,13 +45,16 @@ class ToolExecutor(
   @Throws(IllegalAccessException::class, InvocationTargetException::class)
   private fun execute(arguments: Array<Any?>): String {
     val result = method.call(any, *arguments)
-    return if (method.returnType == Void.TYPE) {
+    return if (method.returnType == typeOf<Unit>()) {
       "Success"
-    } else toJson(result)
+    } else {
+      toJson(result)
+    }
   }
 
-  private fun prepareArguments(argumentsMap: Map<String, Any>): Array<Any?> {
-    val parameters = method.parameters
+  private fun argumentsFor(argumentsMap: Map<String, Any>): Array<Any?> {
+    // Drop the first parameter, which is the tool name
+    val parameters = method.parameters.drop(1)
     val arguments = arrayOfNulls<Any>(parameters.size)
     for (i in parameters.indices) {
       val parameterName = parameters[i].name
@@ -58,35 +62,48 @@ class ToolExecutor(
         var argument = argumentsMap[parameterName]
         val parameterType = parameters[i].type
         // Gson always parses numbers into the Double type. If the parameter type is not Double, a conversion attempt is made.
-        if (argument is Double && !(parameterType == Double::class.java || parameterType == Double::class.javaPrimitiveType)) {
+        if (argument is Double && parameterType != typeOf<Double>()) {
           val doubleValue = argument
-          if (parameterType == Float::class.java || parameterType == Float::class.javaPrimitiveType) {
+          if (parameterType == typeOf<Float>()) {
             require(!(doubleValue < -Float.MAX_VALUE || doubleValue > Float.MAX_VALUE)) { "Double value $doubleValue is out of range for the float type" }
             argument = doubleValue.toFloat()
-          } else if (parameterType == BigDecimal::class.java) {
+          } else if (parameterType == typeOf<BigDecimal>()) {
             argument = BigDecimal.valueOf(doubleValue)
           }
 
           // Allow conversion to integer types only if double value has no fractional part
           if (hasNoFractionalPart(doubleValue)) {
             when (parameterType) {
-              Int::class.java, Int::class -> {
-                require(!(doubleValue < Int.MIN_VALUE || doubleValue > Int.MAX_VALUE)) { "Double value $doubleValue is out of range for the integer type" }
+              typeOf<Int>() -> {
+                require(!(doubleValue < Int.MIN_VALUE || doubleValue > Int.MAX_VALUE)) {
+                  "Double value $doubleValue is out of range for the integer type"
+                }
                 argument = doubleValue.toInt()
               }
-              Long::class.java, Long::class -> {
-                require(!(doubleValue < Long.MIN_VALUE || doubleValue > Long.MAX_VALUE)) { "Double value $doubleValue is out of range for the long type" }
+
+              typeOf<Long>() -> {
+                require(!(doubleValue < Long.MIN_VALUE || doubleValue > Long.MAX_VALUE)) {
+                  "Double value $doubleValue is out of range for the long type"
+                }
                 argument = doubleValue.toLong()
               }
-              Short::class.java, Short::class -> {
-                require(!(doubleValue < Short.MIN_VALUE || doubleValue > Short.MAX_VALUE)) { "Double value $doubleValue is out of range for the short type" }
-                argument = doubleValue.toInt()
+
+              typeOf<Short>() -> {
+                require(!(doubleValue < Short.MIN_VALUE || doubleValue > Short.MAX_VALUE)) {
+                  "Double value $doubleValue is out of range for the short type"
+                }
+                println("short")
+                argument = doubleValue.toInt().toShort()
               }
-              Byte::class.java, Byte::class -> {
-                require(!(doubleValue < Byte.MIN_VALUE || doubleValue > Byte.MAX_VALUE)) { "Double value $doubleValue is out of range for the byte type" }
-                argument = doubleValue.toInt()
+
+              typeOf<Byte>() -> {
+                require(!(doubleValue < Byte.MIN_VALUE || doubleValue > Byte.MAX_VALUE)) {
+                  "Double value $doubleValue is out of range for the byte type"
+                }
+                argument = doubleValue.toInt().toByte()
               }
-              BigInteger::class.java -> {
+
+              typeOf<BigInteger>() -> {
                 argument = BigDecimal.valueOf(doubleValue).toBigInteger()
               }
             }
